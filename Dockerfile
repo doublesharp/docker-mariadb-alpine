@@ -1,38 +1,43 @@
 FROM alpine:latest
 
-ENV LC_ALL=en_GB.UTF-8
-ENV GOSU_VERSION=1.12
+# ARG MARIADB_VERSION=10.1.41
+# ARG APK_REPO=v3.8
 
-# add gosu
-RUN apk update && \
-  apk add vim && apk add wget && \
-  set -x \
-  && apk add --no-cache --virtual .gosu-deps \
-  dpkg \
-  gnupg \
-  openssl \
-  && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
-  && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
-  && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc" \
-  && export GNUPGHOME="$(mktemp -d)" \
-  && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-  && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
-  && rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc \
-  && chmod +x /usr/local/bin/gosu \
-  && gosu nobody true \
-  && apk del .gosu-deps
+# ARG MARIADB_VERSION=10.2.32
+# ARG APK_REPO=3.9
 
-RUN mkdir /docker-entrypoint-initdb.d && \
+# ARG MARIADB_VERSION=10.3.25
+# ARG APK_REPO=3.10
+
+# ARG MARIADB_VERSION=10.4.15
+# ARG APK_REPO=3.12
+
+ARG MARIADB_VERSION=10.5.8
+ARG APK_REPO=3.13
+
+ENV LC_ALL=en_GB.UTF-8 \
+  MARIADB_VERSION=${MARIADB_VERSION}
+
+VOLUME /var/lib/mysql
+
+EXPOSE 3306
+
+RUN set -x && \
+  # get-apk-version.sh && \
+  # install mariadb and dependencies
+  echo "http://dl-cdn.alpinelinux.org/alpine/v${APK_REPO}/main" >> /etc/apk/repositories && \
   apk update && \
   apk -U upgrade && \
-  apk add --no-cache mariadb mariadb-client && \
-  apk add --no-cache tzdata && \
-  apk add --no-cache bash && \
-  # clean up
-  rm -rf /var/cache/apk/*
-
-# comment out a few problematic configuration values
-RUN sed -Ei 's/^(bind-address|log)/#&/' /etc/my.cnf && \
+  apk add --no-cache --virtual .mariadb-deps \
+  mariadb==${MARIADB_VERSION}-r0 \
+  mariadb-client==${MARIADB_VERSION}-r0 \
+  tzdata \
+  bash \
+  su-exec \
+  && \
+  rm -rf /var/cache/apk/* && \
+  # comment out a few problematic configuration values
+  sed -Ei 's/^(bind-address|log)/#&/' /etc/my.cnf && \
   sed -i  's/^skip-networking/#&/' /etc/my.cnf.d/mariadb-server.cnf && \
   # don't reverse lookup hostnames, they are usually another container
   sed -i '/^\[mysqld]$/a skip-host-cache\nskip-name-resolve' /etc/my.cnf && \
@@ -40,15 +45,13 @@ RUN sed -Ei 's/^(bind-address|log)/#&/' /etc/my.cnf && \
   sed -i '/^\[mysqld]$/a user=mysql' /etc/my.cnf && \
   # allow custom configurations
   echo -e '\n!includedir /etc/mysql/conf.d/' >> /etc/my.cnf && \
-  mkdir -p /etc/mysql/conf.d/ && \
   mkdir -p /run/mysqld && \
+  mkdir -p /etc/mysql/conf.d/ && \
+  # load initialization scripts
+  mkdir -p /docker-entrypoint-initdb.d && \
   chown mysql.mysql /run/mysqld
 
-COPY rootfs/usr/local/bin/docker-entrypoint.sh /usr/local/bin/
-
-VOLUME /var/lib/mysql
-
-EXPOSE 3306
+COPY rootfs/usr/local/bin/* /usr/local/bin/
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 

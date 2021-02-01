@@ -323,7 +323,7 @@ _main() {
 
   # skip setup if they aren't running mysqld or want an option that stops mysqld
   if [ "$1" = 'mysqld' ] && ! _mysql_want_help "$@"; then
-    mysql_note "Entrypoint script for MySQL Server ${MARIADB_VERSION} started."
+    mysql_note "Entrypoint script for MariaDB Server ${MARIADB_VERSION} started as $(whoami)."
 
     mysql_check_config "$@"
     # Load various environment variables
@@ -333,7 +333,7 @@ _main() {
     # If container is started as root user, restart as dedicated mysql user
     if [ "$(id -u)" = "0" ]; then
       mysql_note "Switching to dedicated user 'mysql'"
-      exec gosu mysql "$BASH_SOURCE" "$@"
+      su-exec mysql "$BASH_SOURCE" "$@"
     fi
 
     # there's no database, so it needs to be initialized
@@ -361,6 +361,7 @@ _main() {
       echo
     fi
   fi
+
   exec "$@"
 }
 
