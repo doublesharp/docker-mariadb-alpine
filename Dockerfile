@@ -44,7 +44,7 @@ RUN sed -Ei 's/^(bind-address|log)/#&/' /etc/my.cnf && \
   mkdir -p /run/mysqld && \
   chown mysql.mysql /run/mysqld
 
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY rootfs/usr/local/bin/docker-entrypoint.sh /usr/local/bin/
 
 VOLUME /var/lib/mysql
 
