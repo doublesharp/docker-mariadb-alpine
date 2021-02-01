@@ -6,7 +6,7 @@ services:
     build:
       context: .
     volumes:
-      - ./data:/docker-entrypoint-initdb.d:ro
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
       - db_data:/var/lib/mysql
     ports:
       - "3306:3306"
