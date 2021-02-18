@@ -24,8 +24,7 @@ RUN set -xe; \
   bash \
   su-exec \
   ; \
-  rm -rf /var/cache/apk/*;
-RUN set -xe; \
+  rm -rf /var/cache/apk/*; \
   # create /etc/my.cnf if missing
   if [ ! -f /etc/my.cnf ]; then \
   cp /etc/mysql/my.cnf /etc; \
