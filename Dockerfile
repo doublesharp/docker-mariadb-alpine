@@ -4,7 +4,7 @@ FROM alpine:${ALPINE_TAG}
 
 ARG MARIADB_VERSION=
 ARG APK_REPO=edge
-ARG SKIP_SERVER_UTILS=
+ARG WITH_SERVER_UTILS=
 
 ENV LC_ALL=en_US.UTF-8 \
   MARIADB_VERSION=${MARIADB_VERSION}
@@ -15,7 +15,7 @@ EXPOSE 3306
 
 RUN set -xe; \
   # check to see if we need to install server utils
-  export SERVER_UTILS=$(if [ -n "${SKIP_SERVER_UTILS}" ]; then echo ""; else echo "mariadb-server-utils${MARIADB_VERSION}"; fi); \
+  export SERVER_UTILS=$(if [ -n "${WITH_SERVER_UTILS}" ]; then echo "mariadb-server-utils${MARIADB_VERSION}"; else echo ""; fi); \
   # install mariadb and dependencies
   echo "http://dl-cdn.alpinelinux.org/alpine/${APK_REPO}/main" > /etc/apk/repositories; \
   apk update; \
