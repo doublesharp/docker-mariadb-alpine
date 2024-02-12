@@ -4,6 +4,7 @@ FROM alpine:${ALPINE_TAG}
 
 ARG MARIADB_VERSION=
 ARG APK_REPO=edge
+ARG SKIP_SERVER_UTILS=
 
 ENV LC_ALL=en_US.UTF-8 \
   MARIADB_VERSION=${MARIADB_VERSION}
@@ -13,6 +14,8 @@ VOLUME /var/lib/mysql
 EXPOSE 3306
 
 RUN set -xe; \
+  # check to see if we need to install server utils
+  export SERVER_UTILS=$(if [ -n "${SKIP_SERVER_UTILS}" ]; then echo ""; else echo "mariadb-server-utils${MARIADB_VERSION}"; fi); \
   # install mariadb and dependencies
   echo "http://dl-cdn.alpinelinux.org/alpine/${APK_REPO}/main" > /etc/apk/repositories; \
   apk update; \
@@ -20,6 +23,7 @@ RUN set -xe; \
   apk add --no-cache --virtual .mariadb-deps \
   mariadb${MARIADB_VERSION} \
   mariadb-client${MARIADB_VERSION} \
+  ${SERVER_UTILS} \ 
   tzdata \
   bash \
   su-exec \
